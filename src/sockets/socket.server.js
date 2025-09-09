@@ -2,41 +2,71 @@ const {Server, Socket} = require("socket.io");
 const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
-const aiService = require("../services/ai.services")
+const aiService = require("../services/ai.service")
 const messageModel = require("../models/message.model");
-const { response } = require("express");
+const { response, text } = require("express");
+const { createMemory, queryMemory } = require("../services/vector.service");
+const { chat } = require("@pinecone-database/pinecone/dist/assistant/data/chat");
 
 function initSocketServer(httpServer){
     const io = new Server(httpServer, {});
 
-     io.use(async(socket, next)=>{
+    io.use(async (socket, next) => {
+    try {
         const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
+        const token = cookies.token; // Get the token
 
-        if(!cookies){
-            next(new Error("Aunthentication Failed : No token provided"));
+        
+        if (!token) {
+            return next(new Error("Authentication Error: No token provided"));
         }
 
-        try {
-            const decoded = jwt.verify(cookies.token, process.env.JWT_SECRET);
-            const user = await userModel.findById(decoded.id);
-            socket.user = user;
-            next();
-        } 
-        catch (error) {
-            next(new Error("Aunthentication Error : Invalid User"))
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await userModel.findById(decoded.id);
+
+       
+        if (!user) {
+            return next(new Error("Authentication Error: User not found"));
         }
-    })
+
+        socket.user = user;
+        next();
+
+    } catch (error) {
+        
+        next(new Error("Authentication Error: Invalid Token"));
+    }
+  });
 
     io.on("connection", (socket)=>{
         socket.on("ai-message", async(messagePayload)=>{
-            console.log(messagePayload);
 
-            await messageModel.create({
+            const message = await messageModel.create({
                 chat:messagePayload.chat,
                 user:socket.user._id,
                 content:messagePayload.content,
                 role:"user"
             })
+
+            const vectors = await aiService.generateVector(messagePayload.content);
+
+            const memory = await queryMemory({
+                queryVector:vectors,
+                limit:3,
+                metadata:{}
+            })
+            
+            await createMemory({
+                vectors,
+                messageId:message._id,
+                metadata:{
+                    chat:messagePayload.chat,
+                    user:socket.user._id,
+                    text:messagePayload.content
+                }
+            })
+
+            console.log(memory)
 
             const chatHistory = await messageModel.find({
                 chat:messagePayload.chat
@@ -50,11 +80,23 @@ function initSocketServer(httpServer){
             }));
 
 
-            await messageModel.create({
+            const responseMessage = await messageModel.create({
                 chat:messagePayload.chat,
                 user:socket.user._id,
                 content:response,
                 role:"model"
+            })
+
+            const responseVectors = await aiService.generateVector(response);
+
+            await createMemory({
+                vectors:responseVectors,
+                messageId:responseMessage._id,
+                metadata:{
+                    chat:messagePayload.chat,
+                    user:socket.user._id,
+                    text:response
+                }
             })
 
             socket.emit('ai-response', {
