@@ -41,22 +41,36 @@ function initSocketServer(httpServer){
     io.on("connection", (socket)=>{
         socket.on("ai-message", async(messagePayload)=>{
 
-            const message = await messageModel.create({
+            // const message = await messageModel.create({
+            //     chat:messagePayload.chat,
+            //     user:socket.user._id,
+            //     content:messagePayload.content,
+            //     role:"user"
+            // })
+
+            // const vectors = await aiService.generateVector(messagePayload.content);
+
+
+            const [message, vectors] = await Promise.all([
+                messageModel.create({
                 chat:messagePayload.chat,
                 user:socket.user._id,
                 content:messagePayload.content,
                 role:"user"
-            })
+                }), 
 
-            const vectors = await aiService.generateVector(messagePayload.content);
+                
+                aiService.generateVector(messagePayload.content),
 
-            const memory = await queryMemory({
-                queryVector:vectors,
-                limit:3,
-                metadata:{
-                    user:socket.user._id
-                }
-            })
+            ])
+
+            // const memory = await queryMemory({
+            //     queryVector:vectors,
+            //     limit:3,
+            //     metadata:{
+            //         user:socket.user._id
+            //     }
+            // })
             
             await createMemory({
                 vectors,
@@ -68,11 +82,25 @@ function initSocketServer(httpServer){
                 }
             })
 
-            console.log(memory)
 
-            const chatHistory = await messageModel.find({
-                chat:messagePayload.chat
-            })
+            // const chatHistory = await messageModel.find({
+            //     chat:messagePayload.chat
+            // })
+
+            const [memory, chatHistory] = await Promise.all([
+                 queryMemory({
+                    queryVector:vectors,
+                    limit:3,
+                    metadata:{
+                        user:socket.user._id
+                    }
+                }), 
+
+
+                messageModel.find({
+                    chat:messagePayload.chat
+                })
+            ])
 
             const stm = chatHistory.map(item =>{
                 return {
@@ -92,19 +120,37 @@ function initSocketServer(httpServer){
                 }]
             }]
 
-            console.log(ltm, stm)
 
             const response = await aiService.generateResponse([...ltm, ...stm]);
           
 
-            const responseMessage = await messageModel.create({
-                chat:messagePayload.chat,
-                user:socket.user._id,
+            // const responseMessage = await messageModel.create({
+            //     chat:messagePayload.chat,
+            //     user:socket.user._id,
+            //     content:response,
+            //     role:"model"
+            // })
+
+            // const responseVectors = await aiService.generateVector(response);
+
+
+         
+
+            socket.emit('ai-response', {
                 content:response,
-                role:"model"
+                chat:messagePayload.chat
             })
 
-            const responseVectors = await aiService.generateVector(response);
+               const [responseMessage, responseVectors] = await Promise.all([
+                messageModel.create({
+                    chat:messagePayload.chat,
+                    user:socket.user._id,
+                    content:response,
+                    role:"model"
+                }),
+                
+                aiService.generateVector(response)
+            ])
 
             await createMemory({
                 vectors:responseVectors,
@@ -115,15 +161,8 @@ function initSocketServer(httpServer){
                     text:response
                 }
             })
-
-            socket.emit('ai-response', {
-                content:response,
-                chat:messagePayload.chat
-            })
         })
     })
-
-   
 }
 
 module.exports = initSocketServer;
