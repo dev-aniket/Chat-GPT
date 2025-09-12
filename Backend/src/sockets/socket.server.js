@@ -9,7 +9,13 @@ const { createMemory, queryMemory } = require("../services/vector.service");
 
 
 function initSocketServer(httpServer){
-    const io = new Server(httpServer, {});
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "http://localhost:3000",
+            allowedHeaders: ["Content-Type", "Authorization"],
+            credentials: true
+        }
+    });
 
     io.use(async (socket, next) => {
     try {
