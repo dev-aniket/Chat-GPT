@@ -23,6 +23,7 @@ a:hover {
 
 /* Layout helpers */
 .center-min-h-screen {
+  padding: 2rem;
   min-height: 100dvh;
   display: flex;
   align-items: center;
