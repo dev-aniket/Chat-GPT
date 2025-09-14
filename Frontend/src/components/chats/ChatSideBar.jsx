@@ -10,7 +10,7 @@ const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, open }) => 
 
   const handleDeleteChat = async (chatId) => {
     try {
-      await axios.delete(`http://localhost:3000/api/chat/${chatId}`, {
+      await axios.delete(`https://atlas-jl9d.onrender.com/api/chat/${chatId}`, {
         withCredentials: true,
       });
 

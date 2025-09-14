@@ -31,7 +31,7 @@ const Home = () => {
   const handleNewChat = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/chat",
+        "https://atlas-jl9d.onrender.com/api/chat",
         { title: "New Chat" },
         { withCredentials: true }
       );
@@ -45,12 +45,12 @@ const Home = () => {
   };
 
   useEffect(() => {
-    axios.get("http://localhost:3000/api/chat", { withCredentials: true })
+    axios.get("https://atlas-jl9d.onrender.com/api/chat", { withCredentials: true })
       .then(response => {
         dispatch(setChats(response.data.chats.reverse()));
       });
 
-    const tempSocket = io("http://localhost:3000", {
+    const tempSocket = io("https://atlas-jl9d.onrender.com", {
       withCredentials: true,
     });
 
@@ -82,7 +82,7 @@ const sendMessage = async () => {
     //  If no chat yet, create one first
     if (!chatId) {
       const response = await axios.post(
-        "http://localhost:3000/api/chat",
+        "https://atlas-jl9d.onrender.com/api/chat",
         { title: trimmed.split(" ").slice(0, 5).join(" ") || "New Chat" },
         { withCredentials: true }
       );
@@ -109,7 +109,7 @@ const sendMessage = async () => {
     if (activeChat && activeChat.title === "New Chat") {
       const newTitle = trimmed.split(" ").slice(0, 5).join(" ");
       await axios.patch(
-        `http://localhost:3000/api/chat/${chatId}`,
+        `https://atlas-jl9d.onrender.com/api/chat/${chatId}`,
         { title: newTitle },
         { withCredentials: true }
       );
@@ -128,7 +128,7 @@ const sendMessage = async () => {
 
   const getMessages = async (chatId) => {
     const response = await axios.get(
-      `http://localhost:3000/api/chat/messages/${chatId}`,
+      `https://atlas-jl9d.onrender.com/api/chat/messages/${chatId}`,
       { withCredentials: true }
     );
     setMessages(response.data.messages.map(m => ({
@@ -140,7 +140,7 @@ const sendMessage = async () => {
 
   const handleDeleteMessage = async (messageId) => {
     try {
-      await axios.delete(`http://localhost:3000/api/chat/messages/${messageId}`, {
+      await axios.delete(`https://atlas-jl9d.onrender.com/api/chat/messages/${messageId}`, {
         withCredentials: true,
       });
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
