@@ -93,18 +93,18 @@ const sendMessage = async () => {
       dispatch(startNewChat(newChat));
     }
 
-    //  Push user message locally
+    // ✅ Push user message locally
     const newMessage = { id: Date.now(), type: 'user', content: trimmed };
     setMessages((prev) => [...prev, newMessage]);
     dispatch(setInput(""));
 
-    //  Emit to backend
+    // ✅ Emit to backend
     socket.emit("ai-message", {
       chat: chatId,
       content: trimmed,
     });
 
-    //  If chat was "New Chat", update its title
+    // ✅ If chat was "New Chat", update its title
     const activeChat = chats.find(c => c._id === chatId);
     if (activeChat && activeChat.title === "New Chat") {
       const newTitle = trimmed.split(" ").slice(0, 5).join(" ");
@@ -124,6 +124,7 @@ const sendMessage = async () => {
     dispatch(sendingFinished());
   }
 };
+
 
   const getMessages = async (chatId) => {
     const response = await axios.get(
@@ -169,7 +170,7 @@ const sendMessage = async () => {
         {messages.length === 0 && (
           <div className="chat-welcome" aria-hidden="true">
             <div className="chip">Early Preview</div>
-            <h1>ChatGPT Clone</h1>
+            <h1>Atlas</h1>
             <p>
               Ask anything. Paste text, brainstorm ideas, or get quick explanations.
               Your chats stay in the sidebar so you can pick up where you left off.
