@@ -192,6 +192,7 @@ const sendMessage = async () => {
         />
       </main>
 
+      {/* Mobile view */}
       {sidebarOpen && (
         <button
           className="sidebar-backdrop"
