@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import ChatMobileBar from '../components/chats/ChatMobileBar.jsx';
 import ChatSidebar from '../components/chats/ChatSideBar.jsx';
 import ChatMessages from '../components/chats/ChatMessages.jsx';
-import ChatComposer from '../components/chats/chatComposer.jsx';
+import ChatComposer from '../components/chats/ChatComposer.jsx';
 import '../components/chats/ChatLayout.css';
 import {
   ensureInitialChat,
